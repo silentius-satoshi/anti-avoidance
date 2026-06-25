@@ -11,7 +11,7 @@ is surfaced across every entry.
 
 ## Run it locally
 
-Requires Node 18+.
+Requires Node 20.19+ (or 22.12+).
 
 ```bash
 npm install
