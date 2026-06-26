@@ -322,6 +322,7 @@ export default function AntiAvoidance() {
   const [pickTopic, setPickTopic] = useState(null);
   const [beforeVal, setBeforeVal] = useState(5);
   const [startNote, setStartNote] = useState("");
+  const [dreadLocked, setDreadLocked] = useState(false);
 
   // finish-flow transient state
   const [afterVal, setAfterVal] = useState(3);
@@ -480,7 +481,7 @@ export default function AntiAvoidance() {
       timerEndsAt: null,
     };
     persist({ ...data, inProgress: entry, restTimer: null });
-    setPickAction(null); setPickTopic(null); setBeforeVal(5); setStartNote("");
+    setPickAction(null); setPickTopic(null); setBeforeVal(5); setStartNote(""); setDreadLocked(false);
     setAfterVal(3); setFinishNote("");
   };
 
@@ -755,52 +756,79 @@ export default function AntiAvoidance() {
                   <span style={{ fontSize: "0.72rem", color: C.mut2 }}>{new Date().toLocaleDateString(undefined, { weekday: "long" })}</span>
                 </div>
 
-                <div style={{ fontSize: "0.7rem", letterSpacing: "0.06em", textTransform: "uppercase", color: C.mut2, marginBottom: "0.6rem" }}>Pick today's move</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  {ACTIONS.map((a) => {
-                    const on = pickAction === a.id;
-                    return (
-                      <button key={a.id} className="aa-tap" onClick={() => { setPickAction(a.id); if (a.id !== "topic20") setPickTopic(null); }}
-                        style={{ textAlign: "left", border: `1px solid ${on ? C.teal : C.border}`, background: on ? "rgba(63,174,135,0.1)" : "rgba(255,255,255,0.02)", borderRadius: 10, padding: "0.75rem 0.85rem", cursor: "pointer", fontFamily: "inherit" }}>
-                        <div style={{ fontSize: "0.9rem", color: on ? C.ink : C.ink2 }}>{a.label}</div>
-                        <div style={{ fontSize: "0.72rem", color: on ? C.tealSoft : C.mut2, marginTop: "0.15rem" }}>{a.hint}</div>
-                      </button>
-                    );
-                  })}
-                </div>
+                {!dreadLocked ? (
+                  <div className="aa-fade">
+                    {/* the record — confront the belief before committing */}
+                    <div style={{ textAlign: "center", padding: "0.3rem 0 1.4rem" }}>
+                      {all.length >= 4 ? (
+                        <div style={{ fontSize: "0.92rem", color: C.mut, lineHeight: 1.65 }}>
+                          You've sat down to this <span style={{ color: C.ink }}>{all.length}</span> times. It was worse in your head than in reality <span style={{ color: C.teal }}>{overN}</span> of them.
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: "0.85rem", color: C.mut2, lineHeight: 1.65 }}>
+                          The dread before you start is almost always louder than where it lands. Log it now, then test it.
+                        </div>
+                      )}
+                    </div>
 
-                {/* topic chips */}
-                {pickAction === "topic20" && (
-                  <div className="aa-fade" style={{ marginTop: "0.9rem" }}>
-                    <div style={{ fontSize: "0.68rem", color: C.mut2, marginBottom: "0.5rem" }}>Which system? <span style={{ color: C.coral }}>Dots</span> = your priority targets.</div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem" }}>
-                      {TOPICS.map((t) => {
-                        const on = pickTopic === t.id;
+                    <Suds value={beforeVal} onChange={setBeforeVal} caption="Before anything else — how much were you dreading this today?" />
+
+                    <button className="aa-tap" style={{ ...primaryBtn, marginTop: "1.3rem" }} onClick={() => setDreadLocked(true)}>
+                      Logged &mdash; what's the move?
+                    </button>
+                  </div>
+                ) : (
+                  <div className="aa-fade">
+                    <div style={{ fontSize: "0.72rem", color: C.mut2, marginBottom: "1.1rem" }}>Dread logged at <span style={{ color: C.coral }}>{beforeVal}</span>. Now the smallest next step.</div>
+
+                    <div style={{ fontSize: "0.7rem", letterSpacing: "0.06em", textTransform: "uppercase", color: C.mut2, marginBottom: "0.6rem" }}>Pick today's move</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                      {ACTIONS.map((a) => {
+                        const on = pickAction === a.id;
                         return (
-                          <button key={t.id} className="aa-tap" onClick={() => setPickTopic(t.id)}
-                            style={{ display: "flex", alignItems: "center", gap: "0.35rem", border: `1px solid ${on ? C.teal : C.border}`, background: on ? "rgba(63,174,135,0.12)" : "transparent", color: on ? C.teal : C.ink2, borderRadius: 20, padding: "0.4rem 0.8rem", fontSize: "0.78rem", fontFamily: "inherit", cursor: "pointer" }}>
-                            {t.priority && <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.coral, display: "inline-block" }} />}
-                            {t.label}
+                          <button key={a.id} className="aa-tap" onClick={() => { setPickAction(a.id); if (a.id !== "topic20") setPickTopic(null); }}
+                            style={{ textAlign: "left", border: `1px solid ${on ? C.teal : C.border}`, background: on ? "rgba(63,174,135,0.1)" : "rgba(255,255,255,0.02)", borderRadius: 10, padding: "0.75rem 0.85rem", cursor: "pointer", fontFamily: "inherit" }}>
+                            <div style={{ fontSize: "0.9rem", color: on ? C.ink : C.ink2 }}>{a.label}</div>
+                            <div style={{ fontSize: "0.72rem", color: on ? C.tealSoft : C.mut2, marginTop: "0.15rem" }}>{a.hint}</div>
                           </button>
                         );
                       })}
                     </div>
+
+                    {/* topic chips */}
+                    {pickAction === "topic20" && (
+                      <div className="aa-fade" style={{ marginTop: "0.9rem" }}>
+                        <div style={{ fontSize: "0.68rem", color: C.mut2, marginBottom: "0.5rem" }}>Which system? <span style={{ color: C.coral }}>Dots</span> = your priority targets.</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem" }}>
+                          {TOPICS.map((t) => {
+                            const on = pickTopic === t.id;
+                            return (
+                              <button key={t.id} className="aa-tap" onClick={() => setPickTopic(t.id)}
+                                style={{ display: "flex", alignItems: "center", gap: "0.35rem", border: `1px solid ${on ? C.teal : C.border}`, background: on ? "rgba(63,174,135,0.12)" : "transparent", color: on ? C.teal : C.ink2, borderRadius: 20, padding: "0.4rem 0.8rem", fontSize: "0.78rem", fontFamily: "inherit", cursor: "pointer" }}>
+                                {t.priority && <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.coral, display: "inline-block" }} />}
+                                {t.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <input value={startNote} onChange={(e) => setStartNote(e.target.value)} placeholder="Note (optional)"
+                      style={{ width: "100%", boxSizing: "border-box", marginTop: "1.1rem", background: "rgba(0,0,0,0.25)", border: `1px solid ${C.border}`, borderRadius: 9, padding: "0.7rem 0.85rem", color: C.ink, fontFamily: "inherit", fontSize: "0.85rem" }} />
+
+                    <button className="aa-tap" disabled={!pickAction}
+                      style={{ ...primaryBtn, marginTop: "1.2rem", opacity: pickAction ? 1 : 0.4, cursor: pickAction ? "pointer" : "not-allowed", background: pickAction ? C.teal : "rgba(255,255,255,0.1)", color: pickAction ? "#06210f" : C.mut2 }}
+                      onClick={startSession}>
+                      Start &mdash; lock it in
+                    </button>
+
+                    <button className="aa-tap" onClick={() => setDreadLocked(false)}
+                      style={{ width: "100%", marginTop: "0.6rem", background: "none", border: "none", color: C.mut3, fontFamily: "inherit", fontSize: "0.72rem", cursor: "pointer" }}>
+                      &larr; re-rate the dread
+                    </button>
                   </div>
                 )}
-
-                {/* before slider */}
-                <div style={{ marginTop: "1.3rem", paddingTop: "1.2rem", borderTop: `1px solid ${C.border}` }}>
-                  <Suds value={beforeVal} onChange={setBeforeVal} caption="Before you start — how loud is the dread?" />
-                </div>
-
-                <input value={startNote} onChange={(e) => setStartNote(e.target.value)} placeholder="Note (optional)"
-                  style={{ width: "100%", boxSizing: "border-box", marginTop: "1.1rem", background: "rgba(0,0,0,0.25)", border: `1px solid ${C.border}`, borderRadius: 9, padding: "0.7rem 0.85rem", color: C.ink, fontFamily: "inherit", fontSize: "0.85rem" }} />
-
-                <button className="aa-tap" disabled={!pickAction}
-                  style={{ ...primaryBtn, marginTop: "1.2rem", opacity: pickAction ? 1 : 0.4, cursor: pickAction ? "pointer" : "not-allowed", background: pickAction ? C.teal : "rgba(255,255,255,0.1)", color: pickAction ? "#06210f" : C.mut2 }}
-                  onClick={startSession}>
-                  Start &mdash; lock it in
-                </button>
               </div>
             )}
 
