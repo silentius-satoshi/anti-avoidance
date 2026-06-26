@@ -442,6 +442,9 @@ export default function AntiAvoidance() {
   })();
   const maxRoundGap = Math.max(1, ...roundStats.map((r) => r.gap));
 
+  // hit-rate: how often the dread overshot the reality (all time)
+  const overN = all.filter((e) => e.before > e.after).length;
+
   // derived timer
   const ip = data.inProgress;
   const tDur = ip ? (ip.timerDuration != null ? ip.timerDuration : defaultTimerSec(ip.action)) : 0;
@@ -806,6 +809,11 @@ export default function AntiAvoidance() {
               {all.length > 0
                 ? <>So far your <span style={{ color: C.coral }}>before</span> runs <span style={{ color: C.amber }}>{fmt1(avgGap)}</span> points hotter than your <span style={{ color: C.teal }}>after</span>.</>
                 : <>Before = the dread before you start. After = where it lands. The gap is what avoidance costs you.</>}
+              {all.length >= 4 && (
+                <div style={{ marginTop: "0.4rem", color: C.mut2 }}>
+                  It landed <span style={{ color: C.teal }}>easier than you feared</span> in <span style={{ color: C.ink2 }}>{overN}</span> of <span style={{ color: C.ink2 }}>{all.length}</span> sessions.
+                </div>
+              )}
             </div>
           </>
         )}
@@ -819,6 +827,23 @@ export default function AntiAvoidance() {
                 ? <div style={{ color: C.mut2, fontSize: "0.85rem", textAlign: "center", padding: "1.5rem 0" }}>No drops yet. Your first action writes the first data point.</div>
                 : <DropChart roundEntries={roundEntries} inProgress={data.inProgress} round={data.round} />}
             </div>
+
+            {/* weak-domain coverage this round */}
+            {roundEntries.length >= 1 && (
+              <div style={{ ...card, marginBottom: "1rem" }}>
+                <div style={{ fontSize: "0.7rem", letterSpacing: "0.06em", textTransform: "uppercase", color: C.mut2, marginBottom: "0.2rem" }}>Weak domains this round</div>
+                <div style={{ fontSize: "0.72rem", color: C.mut3, marginBottom: "0.6rem" }}>From your 20-min topic sessions. A zero is the one you're dodging.</div>
+                {TOPICS.filter((t) => t.priority).map((t) => {
+                  const n = roundEntries.filter((e) => e.topic === t.id).length;
+                  return (
+                    <div key={t.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.45rem 0", borderTop: `1px solid ${C.border}` }}>
+                      <span style={{ fontSize: "0.82rem", color: n === 0 ? C.mut : C.ink2 }}>{t.label}</span>
+                      <span style={{ fontSize: "0.95rem", fontVariantNumeric: "tabular-nums", color: n === 0 ? C.coral : C.teal }}>{n}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* all-time stats */}
             <div style={{ display: "flex", gap: "0.7rem", marginBottom: "1rem" }}>
