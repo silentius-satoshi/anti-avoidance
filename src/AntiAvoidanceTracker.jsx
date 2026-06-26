@@ -431,6 +431,17 @@ export default function AntiAvoidance() {
   const avgGap = avgB - avgA;
   const streak = computeStreak(all);
 
+  // cross-round trend: avg gap (before - after) per round, oldest -> newest
+  const roundStats = (() => {
+    const m = new Map();
+    for (const e of all) {
+      if (!m.has(e.round)) m.set(e.round, { b: [], a: [] });
+      const r = m.get(e.round); r.b.push(e.before); r.a.push(e.after);
+    }
+    return [...m.entries()].sort((x, y) => x[0] - y[0]).map(([round, r]) => ({ round, n: r.b.length, gap: mean(r.b) - mean(r.a) }));
+  })();
+  const maxRoundGap = Math.max(1, ...roundStats.map((r) => r.gap));
+
   // derived timer
   const ip = data.inProgress;
   const tDur = ip ? (ip.timerDuration != null ? ip.timerDuration : defaultTimerSec(ip.action)) : 0;
@@ -575,7 +586,7 @@ export default function AntiAvoidance() {
   const confirmImport = () => { if (pendingImport) { persist(pendingImport); setPendingImport(null); setImportMsg("Backup restored."); } };
 
   // shared styles
-  const shell = { minHeight: "100vh", background: C.bg, fontFamily: "Georgia, 'Times New Roman', serif", color: C.ink, display: "flex", justifyContent: "center", padding: "1.1rem 0.9rem 3rem" };
+  const shell = { minHeight: "100vh", background: C.bg, fontFamily: "Georgia, 'Times New Roman', serif", color: C.ink, display: "flex", justifyContent: "center", padding: "calc(1.1rem + env(safe-area-inset-top)) calc(0.9rem + env(safe-area-inset-right)) calc(3rem + env(safe-area-inset-bottom)) calc(0.9rem + env(safe-area-inset-left))" };
   const wrap = { width: "100%", maxWidth: 540 };
   const card = { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "1.25rem" };
   const primaryBtn = { width: "100%", border: "none", borderRadius: 10, padding: "0.95rem", color: "#06210f", fontFamily: "inherit", fontSize: "0.98rem", fontWeight: 700, cursor: "pointer", background: C.teal, letterSpacing: "0.01em" };
@@ -592,6 +603,11 @@ export default function AntiAvoidance() {
         .aa-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:30px;height:30px;border-radius:50%;background:#f0e8d8;border:4px solid #080d18;box-shadow:0 0 0 1px rgba(255,255,255,0.25),0 2px 6px rgba(0,0,0,0.55);cursor:pointer;margin-top:-9px;}
         .aa-range::-moz-range-thumb{width:30px;height:30px;border-radius:50%;background:#f0e8d8;border:4px solid #080d18;box-shadow:0 0 0 1px rgba(255,255,255,0.25);cursor:pointer;}
         .aa-tap:focus-visible{outline:2px solid #3fae87;outline-offset:2px;}
+        /* iOS PWA fit: tap flash, callout, input zoom, overscroll bounce */
+        html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent;}
+        html,body{overscroll-behavior:none;}
+        .aa-tap{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
+        input,textarea,select{font-size:16px !important;}
         @keyframes aaFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
         .aa-fade{animation:aaFade .3s ease;}
         @keyframes aaPulse{0%{r:7;opacity:.9}70%{r:13;opacity:0}100%{opacity:0}}
@@ -813,6 +829,27 @@ export default function AntiAvoidance() {
                 </div>
               ))}
             </div>
+
+            {/* gap by round (cross-round trend) */}
+            {roundStats.length >= 2 && (
+              <div style={{ ...card, marginBottom: "1rem" }}>
+                <div style={{ fontSize: "0.7rem", letterSpacing: "0.06em", textTransform: "uppercase", color: C.mut2, marginBottom: "0.2rem" }}>Gap by round</div>
+                <div style={{ fontSize: "0.72rem", color: C.mut3, marginBottom: "1.1rem" }}>How far your dread overshoots reality, round over round.</div>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "0.5rem", height: 88 }}>
+                  {roundStats.map((r) => {
+                    const h = Math.max(6, Math.round((Math.max(0, r.gap) / maxRoundGap) * 64));
+                    const cur = r.round === data.round;
+                    return (
+                      <div key={r.round} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem" }}>
+                        <div style={{ fontSize: "0.74rem", color: C.amber, fontVariantNumeric: "tabular-nums" }}>{fmt1(r.gap)}</div>
+                        <div title={`Round ${r.round}: ${r.n} action${r.n === 1 ? "" : "s"}`} style={{ width: "100%", maxWidth: 34, height: h, background: cur ? C.amber : "rgba(232,160,48,0.38)", borderRadius: 4 }} />
+                        <div style={{ fontSize: "0.66rem", color: cur ? C.amber : C.mut2 }}>R{r.round}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div style={{ display: "flex", gap: "0.7rem", marginBottom: "1rem" }}>
               <div style={{ flex: 1, ...card, padding: "1rem", textAlign: "center" }}>
