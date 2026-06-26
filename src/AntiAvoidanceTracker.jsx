@@ -546,6 +546,16 @@ export default function AntiAvoidance() {
   };
   const breakDismiss = () => persist({ ...data, restTimer: null });
 
+  const backToPicker = () => {
+    const ip = data.inProgress;
+    if (!ip) return;
+    setBeforeVal(ip.before);
+    setPickAction(ip.action);
+    setPickTopic(ip.topic || null);
+    setDreadLocked(true);
+    persist({ ...data, inProgress: null });
+  };
+
   const finishSession = () => {
     const e = { ...data.inProgress, after: afterVal, finishNote: finishNote.trim(), finishedAt: new Date().toISOString() };
     persist({ ...data, entries: [...data.entries, e], inProgress: null });
@@ -716,7 +726,15 @@ export default function AntiAvoidance() {
             {/* finish in-progress */}
             {!data.restTimer && !justFinished && data.inProgress && (
               <div style={card} className="aa-fade">
-                <div style={{ fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: C.coral, marginBottom: "0.6rem" }}>In progress</div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "0.6rem" }}>
+                  <div style={{ fontSize: "0.68rem", letterSpacing: "0.18em", textTransform: "uppercase", color: C.coral }}>In progress</div>
+                  {!tDone && (
+                    <button className="aa-tap" onClick={backToPicker}
+                      style={{ background: "none", border: "none", color: C.mut3, fontFamily: "inherit", fontSize: "0.72rem", cursor: "pointer", padding: 0 }}>
+                      &larr; change action
+                    </button>
+                  )}
+                </div>
                 <div style={{ fontSize: "1.12rem", color: C.ink, marginBottom: "0.2rem" }}>{actionLabel(data.inProgress.action)}</div>
                 {data.inProgress.topic && <div style={{ fontSize: "0.82rem", color: C.tealSoft, marginBottom: "0.3rem" }}>{topicLabel(data.inProgress.topic)}</div>}
                 <div style={{ fontSize: "0.78rem", color: C.mut2, marginBottom: "1.3rem" }}>You logged the dread at <span style={{ color: C.coral }}>{data.inProgress.before}</span>. Do the thing, then land it.</div>
